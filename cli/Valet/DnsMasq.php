@@ -25,11 +25,13 @@ class DnsMasq
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, Filesystem $files, CommandLine $cli)
     {
-        $this->pm = $pm;
-        $this->sm = $sm;
-        $this->cli = $cli;
+        $this->pm    = $pm;
+        $this->sm    = $sm;
+        $this->cli   = $cli;
         $this->files = $files;
-        $this->configPath = '/etc/dnsmasq.d/valet';
+        $this->resolv       = '/etc/resolv.conf.head';
+        $this->configPath   = '/etc/dnsmasq.d/valet';
+        $this->dnsmasqPath  = '/etc/dnsmasq.d/config';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
         $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
@@ -82,6 +84,8 @@ class DnsMasq
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
 
+        $this->files->putAsUser($this->resolv, 'nameserver 127.0.0.1'.PHP_EOL);
+        $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
     }
 
@@ -93,7 +97,7 @@ class DnsMasq
      */
     public function updateDomain($oldDomain, $newDomain)
     {
-        $this->fixResolved();
+        // $this->fixResolved();
         $this->createCustomConfigFile($newDomain);
         $this->sm->restart('dnsmasq');
     }
@@ -106,6 +110,8 @@ class DnsMasq
     public function uninstall()
     {
         $this->files->unlink($this->configPath);
+        $this->files->unlink($this->dnsmasq);
+        $this->files->unlink($this->resolv);
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
 

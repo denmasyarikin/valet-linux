@@ -1,0 +1,7 @@
+no-resolv
+keep-in-foreground
+no-hosts
+bind-interfaces
+listen-address=127.0.1.1
+cache-size=0
+proxy-dnssec
