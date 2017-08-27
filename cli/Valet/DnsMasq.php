@@ -83,6 +83,7 @@ class DnsMasq
         $this->pm->ensureInstalled('dnsmasq');
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
+        $this->files->unlink('/etc/dnsmasq.d/network-manager');
 
         $this->files->putAsUser($this->resolv, 'nameserver 127.0.0.1'.PHP_EOL);
         $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq'));
