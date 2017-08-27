@@ -29,7 +29,7 @@ class DnsMasq
         $this->sm = $sm;
         $this->cli = $cli;
         $this->files = $files;
-        $this->configPath = '/etc/NetworkManager/dnsmasq.d/valet';
+        $this->configPath = '/etc/dnsmasq.d/valet';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
         $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
@@ -42,9 +42,11 @@ class DnsMasq
     public function install()
     {
         $this->dnsmasqSetup();
+        $this->sm->enable('dnsmasq');
         $this->fixResolved();
+        $this->pm->nmRestart($this->sm);
         $this->createCustomConfigFile('dev');
-        $this->pm->dnsmasqRestart($this->sm);
+        $this->sm->restart('dnsmasq');
     }
 
     /**
@@ -78,6 +80,7 @@ class DnsMasq
     {
         $this->pm->ensureInstalled('dnsmasq');
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
+        $this->files->ensureDirExists('/etc/dnsmasq.d');
 
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
     }
@@ -92,7 +95,7 @@ class DnsMasq
     {
         $this->fixResolved();
         $this->createCustomConfigFile($newDomain);
-        $this->pm->dnsmasqRestart($this->sm);
+        $this->sm->restart('dnsmasq');
     }
 
     /**
@@ -106,6 +109,7 @@ class DnsMasq
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
 
-        $this->pm->dnsmasqRestart($this->sm);
+        $this->pm->nmRestart($this->sm);
+        $this->sm->restart('dnsmasq');
     }
 }
