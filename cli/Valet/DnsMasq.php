@@ -88,7 +88,9 @@ class DnsMasq
 
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
+        
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
+        $this->files->unlink($this->resolvconf);
 
         $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
         $this->files->putAsUser($this->resolvhead, 'nameserver 127.0.0.1'.PHP_EOL);
