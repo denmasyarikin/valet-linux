@@ -30,9 +30,8 @@ class DnsMasq
         $this->cli   = $cli;
         $this->files = $files;
         $this->resolvconf   = '/etc/resolv.conf';
-        $this->resolvhead   = '/etc/resolv.conf.head';
         $this->configPath   = '/etc/dnsmasq.d/valet';
-        $this->dnsmasqPath  = '/etc/dnsmasq.d/config';
+        $this->dnsmasqPath  = '/etc/dnsmasq.d/options';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
         $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
@@ -90,11 +89,10 @@ class DnsMasq
         $this->files->ensureDirExists('/etc/dnsmasq.d');
         
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
-        $this->files->unlink($this->resolvconf);
+        $this->files->backup($this->resolvconf);
 
         $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
-        $this->files->putAsUser($this->resolvhead, 'nameserver 127.0.0.1'.PHP_EOL);
-        $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq'));
+        $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
         
         $this->cli->run('chattr +i '.$this->resolvconf);
@@ -108,7 +106,6 @@ class DnsMasq
      */
     public function updateDomain($oldDomain, $newDomain)
     {
-        // $this->fixResolved();
         $this->createCustomConfigFile($newDomain);
         $this->sm->restart('dnsmasq');
     }
@@ -125,6 +122,7 @@ class DnsMasq
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
         $this->cli->run('chattr -i '.$this->resolvconf);
+        $this->files->restore($this->resolvconf);
 
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
