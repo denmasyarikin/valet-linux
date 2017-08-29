@@ -1,3 +1,5 @@
+no-resolv
 bind-interfaces
 cache-size=0
 proxy-dnssec
+resolv-file=/run/NetworkManager/resolv.conf

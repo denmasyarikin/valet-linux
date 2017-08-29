@@ -91,13 +91,6 @@ class Apt implements PackageManager
     public function nmRestart($sm)
     {
         $sm->restart(['network-manager']);
-
-        $version = trim($this->cli->run('cat /etc/*release | grep DISTRIB_RELEASE | cut -d\= -f2'));
-
-        if ($version === '17.04') {
-            $sm->enable('systemd-resolved');
-            $sm->restart('systemd-resolved');
-        }
     }
 
     /**

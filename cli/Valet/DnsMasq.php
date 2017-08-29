@@ -29,7 +29,8 @@ class DnsMasq
         $this->sm    = $sm;
         $this->cli   = $cli;
         $this->files = $files;
-        $this->resolv       = '/etc/resolv.conf.head';
+        $this->resolvconf   = '/etc/resolv.conf';
+        $this->resolvhead   = '/etc/resolv.conf.head';
         $this->configPath   = '/etc/dnsmasq.d/valet';
         $this->dnsmasqPath  = '/etc/dnsmasq.d/config';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
@@ -44,10 +45,9 @@ class DnsMasq
     public function install()
     {
         $this->dnsmasqSetup();
-        $this->sm->enable('dnsmasq');
         $this->fixResolved();
-        $this->pm->nmRestart($this->sm);
         $this->createCustomConfigFile('dev');
+        $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
     }
 
@@ -73,6 +73,9 @@ class DnsMasq
 
         $this->files->backup($resolved);
         $this->files->putAsUser($resolved, $this->files->get(__DIR__.'/../stubs/resolved.conf'));
+
+        $sm->disable('systemd-resolved');
+        $sm->stop('systemd-resolved');
     }
 
     /**
@@ -81,13 +84,18 @@ class DnsMasq
     public function dnsmasqSetup()
     {
         $this->pm->ensureInstalled('dnsmasq');
+        $this->sm->enable('dnsmasq');
+        
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
 
-        $this->files->putAsUser($this->resolv, 'nameserver 127.0.0.1'.PHP_EOL);
+        $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
+        $this->files->putAsUser($this->resolvhead, 'nameserver 127.0.0.1'.PHP_EOL);
         $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
+        
+        $this->cli->run('chattr +i '.$this->resolvconf);
     }
 
     /**
@@ -111,8 +119,7 @@ class DnsMasq
     public function uninstall()
     {
         $this->files->unlink($this->configPath);
-        $this->files->unlink($this->dnsmasq);
-        $this->files->unlink($this->resolv);
+        $this->files->unlink($this->resolvhead);
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
 
