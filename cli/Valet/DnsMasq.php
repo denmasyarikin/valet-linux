@@ -30,8 +30,9 @@ class DnsMasq
         $this->cli   = $cli;
         $this->files = $files;
         $this->resolvconf   = '/etc/resolv.conf';
+        $this->dnsmasqconf  = '/etc/dnsmasq.conf';
         $this->configPath   = '/etc/dnsmasq.d/valet';
-        $this->dnsmasqPath  = '/etc/dnsmasq.d/options';
+        $this->dnsmasqOpts  = '/etc/dnsmasq.d/options';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
         $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
@@ -41,11 +42,26 @@ class DnsMasq
      *
      * @return void
      */
-    public function install()
+    private function lockResolvConf($lock = true)
+    {
+        if ($lock) {
+            $this->cli->run('chattr +i '.$this->resolvconf);
+            return;
+        }
+
+        $this->cli->run('chattr -i '.$this->resolvconf);
+    }
+
+    /**
+     * Install and configure DnsMasq.
+     *
+     * @return void
+     */
+    public function install($domain = 'dev')
     {
         $this->dnsmasqSetup();
         $this->fixResolved();
-        $this->createCustomConfigFile('dev');
+        $this->createCustomConfigFile($domain);
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
     }
@@ -90,12 +106,14 @@ class DnsMasq
         
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->resolvconf);
+        $this->files->backup($this->dnsmasqconf);
 
+        $this->lockResolvConf(false);
         $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
-        $this->files->putAsUser($this->dnsmasqPath, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
+        $this->files->putAsUser($this->dnsmasqconf, $this->files->get(__DIR__.'/../stubs/dnsmasq.conf'));
+        $this->files->putAsUser($this->dnsmasqOpts, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
-        
-        $this->cli->run('chattr +i '.$this->resolvconf);
+        $this->lockResolvConf();
     }
 
     /**
@@ -118,13 +136,17 @@ class DnsMasq
     public function uninstall()
     {
         $this->files->unlink($this->configPath);
-        $this->files->unlink($this->resolvhead);
+        $this->files->unlink($this->dnsmasqOpts);
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
-        $this->cli->run('chattr -i '.$this->resolvconf);
+        $this->lockResolvConf(false);
         $this->files->restore($this->resolvconf);
+        $this->files->restore($this->dnsmasqconf);
 
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
+
+        info('Valet DNS changes have been rolled back');
+        warning('If your system depended on systemd-resolved (like Ubuntu 17.04), please enable it manually');
     }
 }
