@@ -122,6 +122,7 @@ class DnsMasq
         $this->files->unlink($this->resolvhead);
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
+        $this->cli->run('chattr -i '.$this->resolvconf);
 
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
