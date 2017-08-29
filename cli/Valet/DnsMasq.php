@@ -74,8 +74,8 @@ class DnsMasq
         $this->files->backup($resolved);
         $this->files->putAsUser($resolved, $this->files->get(__DIR__.'/../stubs/resolved.conf'));
 
-        $sm->disable('systemd-resolved');
-        $sm->stop('systemd-resolved');
+        $this->sm->disable('systemd-resolved');
+        $this->sm->stop('systemd-resolved');
     }
 
     /**
@@ -85,7 +85,7 @@ class DnsMasq
     {
         $this->pm->ensureInstalled('dnsmasq');
         $this->sm->enable('dnsmasq');
-        
+
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
