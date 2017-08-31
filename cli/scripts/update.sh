@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-function check_dependencies {
+function check_dependencies() {
     local RED='\033[1;31m'
     local NC='\033[0m'
     local BOOL=true
@@ -9,12 +9,12 @@ function check_dependencies {
     for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
         if ! [ -x "$(command -v $cmd)" ]; then
             printf "${RED}%-15s" "$cmd"
-            printf "missing, please install the program.\n${NC}"
-            BOOL=false
+            printf "is missing, please install the program before proceeding.\n${NC}"
+            local BOOL=false
         fi
     done
 
-    if [ "$BOOL" = "false" ]; then
+    if [ "$BOOL" = false ]; then
         exit 1;
     fi
 }
@@ -36,31 +36,6 @@ function fix-config() {
     fi
 }
 
-function cleanup {
-    local NM="/etc/NetworkManager"
-    local TMP="/tmp/nm.conf"
-
-    if [[ -f "$NM"/dnsmasq.d/valet ]]
-    then
-        echo "Removing old dnsmasq config file..."
-        sudo rm "$NM"/dnsmasq.d/valet
-    fi
-
-    if [[ -f "$NM"/conf.d/valet.conf ]]
-    then
-        echo "Removing old NetworkManager config file..."
-        sudo rm "$NM"/conf.d/valet.conf
-    fi
-
-    if grep -xq "dns=dnsmasq" "$NM/NetworkManager.conf"
-    then
-        echo "Removing dnsmasq control from NetworkManager..."
-        sudo grep -v "dns=dnsmasq" "$NM/NetworkManager.conf" > "$TMP" && sudo mv "$TMP" "$NM/NetworkManager.conf"
-    fi
-
-    echo "Cleanup done."
-}
-
 if [[ "$1" = "update" ]]
 then
     check_dependencies
@@ -70,4 +45,3 @@ fi
 
 check_dependencies
 fix-config
-# cleanup

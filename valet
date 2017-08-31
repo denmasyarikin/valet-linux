@@ -6,7 +6,7 @@ SOURCE="${BASH_SOURCE[0]}"
 SUDOCMDS="uninstall install start restart stop unsecure secure"
 HOMEPATH=$HOME
 
-function check_dependencies {
+function check_dependencies() {
     local RED='\033[1;31m'
     local NC='\033[0m'
     local BOOL=true
@@ -15,11 +15,11 @@ function check_dependencies {
         if ! [ -x "$(command -v $cmd)" ]; then
             printf "${RED}%-15s" "$cmd"
             printf "missing, please install the program.\n${NC}"
-            BOOL=false
+            local BOOL=false
         fi
     done
 
-    if [ "$BOOL" = "false" ]; then
+    if [ "$BOOL" = false ]; then
         exit 1;
     fi
 }
@@ -47,6 +47,8 @@ fi
 # us to never require the end users to manually specify each sudo.
 if [[ -n $1 && $SUDOCMDS =~ $1 ]]
 then
+    check_dependencies
+    
     if [[ "$EUID" -ne 0 ]]
     then
         sudo env HOME=$HOMEPATH $SOURCE "$@"
