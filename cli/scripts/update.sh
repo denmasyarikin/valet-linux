@@ -1,4 +1,23 @@
 #!/usr/bin/env bash
+set -e
+
+function check_dependencies {
+    local RED='\033[1;31m'
+    local NC='\033[0m'
+    local BOOL=true
+
+    for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
+        if ! [ -x "$(command -v $cmd)" ]; then
+            printf "${RED}%-15s" "$cmd"
+            printf "missing, please install the program.\n${NC}"
+            BOOL=false
+        fi
+    done
+
+    if [ "$BOOL" = "false" ]; then
+        exit 1;
+    fi
+}
 
 # Determine if the port config key exists, if not, create it
 function fix-config() {
@@ -44,8 +63,11 @@ function cleanup {
 
 if [[ "$1" = "update" ]]
 then
+    check_dependencies
     composer global update "cpriego/valet-linux"
+    valet install
 fi
 
+check_dependencies
 fix-config
 # cleanup

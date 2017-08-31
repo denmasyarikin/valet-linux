@@ -281,9 +281,6 @@ if (is_dir(VALET_HOME_PATH)) {
             warning('Updating now...');
             passthru($script.' update');
         }
-        DnsMasq::restart();
-        PhpFpm::restart();
-        Nginx::restart();
     })->descriptions('Update Valet Linux and clean up cruft');
 }
 
