@@ -44,12 +44,11 @@ class DnsMasq
      */
     private function lockResolvConf($lock = true)
     {
-        if ($lock) {
-            $this->cli->run('chattr +i '.$this->resolvconf);
-            return;
-        }
+        $arg = $lock ? '+i' : '-i';
 
-        $this->cli->run('chattr -i '.$this->resolvconf);
+        $this->cli->run("chattr {$arg} {$this->resolvconf}", function ($code, $msg){
+            warning($msg);
+        });
     }
 
     /**
@@ -103,16 +102,18 @@ class DnsMasq
 
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
-        
+
+        $this->lockResolvConf(false);
+
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->resolvconf);
         $this->files->backup($this->dnsmasqconf);
 
-        $this->lockResolvConf(false);
         $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
         $this->files->putAsUser($this->dnsmasqconf, $this->files->get(__DIR__.'/../stubs/dnsmasq.conf'));
         $this->files->putAsUser($this->dnsmasqOpts, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
+
         $this->lockResolvConf();
     }
 
