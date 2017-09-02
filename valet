@@ -9,18 +9,24 @@ HOMEPATH=$HOME
 function check_dependencies() {
     local RED='\033[1;31m'
     local NC='\033[0m'
-    local BOOL=true
+    local msg=''
 
-    for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
-        if ! [ -x "$(command -v $cmd)" ]; then
-            printf "${RED}%-15s" "$cmd"
-            printf "missing, please install the program.\n${NC}"
-            local BOOL=false
+    if [[ "$APP_ENV" != "testing" ]]; then
+        for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
+            local str=''
+
+            if [[ -x "$(command -v $cmd)" ]]; then
+                printf -v str " - %s\n" "$cmd"
+                local msg+="$str"
+            fi
+        done
+
+        if [[ $msg != '' ]]; then
+            printf "${RED}You have missing Valet dependiencies:\n"
+            printf "$msg"
+            printf "\nPlease refer to https://cpriego.github.io/valet-linux/requirements on how to install them.${NC}\n"
+            exit 1;
         fi
-    done
-
-    if [ "$BOOL" = false ]; then
-        exit 1;
     fi
 }
 
@@ -48,7 +54,7 @@ fi
 if [[ -n $1 && $SUDOCMDS =~ $1 ]]
 then
     check_dependencies
-    
+
     if [[ "$EUID" -ne 0 ]]
     then
         sudo env HOME=$HOMEPATH $SOURCE "$@"
@@ -71,7 +77,7 @@ fi
 if [[ "$1" = "share" ]]
 then
     check_dependencies
-    
+
     HOST="${PWD##*/}"
     DOMAIN=$(php "$DIR/cli/valet.php" domain)
     PORT=$(cat "$HOME/.valet/config.json" | jq -r ".port")
@@ -92,5 +98,6 @@ then
 # and let it handle the request. These are commands which can be run
 # without sudo and don't require taking over terminals like Ngrok.
 else
-    php "$DIR/cli/valet.php" "$@"
+    check_dependencies
+    # php "$DIR/cli/valet.php" "$@"
 fi
