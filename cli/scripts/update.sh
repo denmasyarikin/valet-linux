@@ -10,7 +10,7 @@ function check_dependencies() {
         for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
             local str=''
 
-            if [[ -x "$(command -v $cmd)" ]]; then
+            if ! [[ -x "$(command -v $cmd)" ]]; then
                 printf -v str " - %s\n" "$cmd"
                 local msg+="$str"
             fi
