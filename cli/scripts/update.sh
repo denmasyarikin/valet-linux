@@ -4,18 +4,24 @@ set -e
 function check_dependencies() {
     local RED='\033[1;31m'
     local NC='\033[0m'
-    local BOOL=true
+    local msg=''
 
-    for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
-        if ! [ -x "$(command -v $cmd)" ]; then
-            printf "${RED}%-15s" "$cmd"
-            printf "is missing, please install the program before proceeding.\n${NC}"
-            local BOOL=false
+    if [[ "$APP_ENV" != "testing" ]]; then
+        for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
+            local str=''
+
+            if [[ -x "$(command -v $cmd)" ]]; then
+                printf -v str " - %s\n" "$cmd"
+                local msg+="$str"
+            fi
+        done
+
+        if [[ $msg != '' ]]; then
+            printf "${RED}You have missing Valet dependiencies:\n"
+            printf "$msg"
+            printf "\nPlease refer to https://cpriego.github.io/valet-linux/requirements on how to install them.${NC}\n"
+            exit 1;
         fi
-    done
-
-    if [ "$BOOL" = false ]; then
-        exit 1;
     fi
 }
 
