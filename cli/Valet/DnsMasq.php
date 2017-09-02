@@ -46,9 +46,11 @@ class DnsMasq
     {
         $arg = $lock ? '+i' : '-i';
 
-        $this->cli->run("chattr {$arg} {$this->resolvconf}", function ($code, $msg){
-            warning($msg);
-        });
+        if (! $this->files->isLink($this->resolvconf)) {
+            $this->cli->run("chattr {$arg} {$this->resolvconf}", function ($code, $msg) {
+                warning($msg);
+            });
+        }
     }
 
     /**
@@ -107,6 +109,7 @@ class DnsMasq
 
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->resolvconf);
+        $this->files->unlink($this->resolvconf);
         $this->files->backup($this->dnsmasqconf);
 
         $this->files->putAsUser($this->resolvconf, 'nameserver 127.0.0.1'.PHP_EOL);
