@@ -105,6 +105,8 @@ class DnsMasq
         $this->files->ensureDirExists('/etc/NetworkManager/conf.d');
         $this->files->ensureDirExists('/etc/dnsmasq.d');
 
+        $this->files->uncommentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
+
         $this->lockResolvConf(false);
 
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
@@ -146,6 +148,7 @@ class DnsMasq
         $this->lockResolvConf(false);
         $this->files->restore($this->resolvconf);
         $this->files->restore($this->dnsmasqconf);
+        $this->files->commentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
 
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
