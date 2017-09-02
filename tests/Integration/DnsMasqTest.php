@@ -40,7 +40,6 @@ class DnsMasqTest extends TestCase
         $dnsMasq->shouldReceive('createCustomConfigFile')->once()->with('dev');
         $dnsMasq->shouldReceive('fixResolved')->once();
         $pm->shouldReceive('nmRestart')->once()->with($sm);
-        $sm->shouldReceive('enable')->once()->with('dnsmasq');
         $sm->shouldReceive('restart')->once()->with('dnsmasq');
         $dnsMasq->install();
     }
