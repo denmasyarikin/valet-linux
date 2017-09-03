@@ -329,7 +329,8 @@ class Filesystem
     public function commentLine($line, $file)
     {
         if ($this->exists($file)) {
-            CommandLineFacade::run('sed -i "/'.escapeshellarg($line).'/ s/^/# /" '.escapeshellarg($file));
+            $command = "sed -i '/{$line}/ s/^/# /' {$file}";
+            CommandLineFacade::run($command);
         }
     }
 
@@ -343,7 +344,8 @@ class Filesystem
     public function uncommentLine($line, $file)
     {
         if ($this->exists($file)) {
-            CommandLineFacade::run('sed -i "/'.escapeshellarg($line).'/ s/# *//" '.escapeshellarg($file));
+            $command = "sed -i '/{$line}/ s/# *//' {$file}";
+            CommandLineFacade::run($command);
         }
     }
 
