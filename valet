@@ -11,7 +11,7 @@ function check_dependencies() {
     local NC='\033[0m'
     local msg=''
 
-    if [[ "$APP_ENV" != "testing" ]]; then
+    if [[ -f "$DIR/in_testing" ]]; then
         for cmd in "jq" "xsel" "certutil" "NetworkManager"; do
             local str=''
 

@@ -12,12 +12,22 @@ fi
 # Go into repository workspace
 cd $REPOSITORY
 
-sudo mkdir -p /run/NetworkManager
-echo 'nameserver 8.8.8.8' | sudo tee -a /run/NetworkManager/resolv.conf > /dev/null
-echo 'user=root' | sudo tee -a /workspace/cli/stubs/dnsmasq.conf > /dev/null
+if [[ "${APP_ENV}" = "testing" ]]; then
+    touch in_testing
+
+    if [[ ! -d '/run/resolvconf/interfaces/' ]]
+        sudo mkdir -p '/run/resolvconf/interfaces/'
+    fi
+
+    $NPATH="/run/resolvconf/interfaces/NetworkManager"
+    $DMPATH="/workspace/cli/stubs/dnsmasq.conf"
+
+    grep -pb "nameserver" "${NPATH}" || echo 'nameserver 8.8.8.8' | sudo tee -a "${NPATH}" > /dev/null
+    grep -pb "user=root" "${DMPATH}" || echo 'user=root' | sudo tee -a "${DMPATH}" > /dev/null
+fi
 
 # Install valet
 ./valet install
 
 # Run Functional tests
-./vendor/bin/phpunit --group functional
+vendor/bin/phpunit --group functional
